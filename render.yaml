@@ -23,6 +23,8 @@ services:
         value: 5242880
       - key: ALLOWED_FILE_TYPES
         value: image/jpeg,image/png,image/jpg,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document
+      - key: NPM_CONFIG_PRODUCTION
+        value: false
       # These need to be set manually in Render dashboard
       # DATABASE_URL: Add your Supabase PostgreSQL connection string
       # SUPABASE_URL: Add your Supabase project URL
