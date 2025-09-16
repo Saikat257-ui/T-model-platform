@@ -15,8 +15,39 @@ api.interceptors.request.use((config) => {
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
+  console.log('API Request:', config.method?.toUpperCase(), config.url);
   return config;
 });
+
+
+
+
+
+// Response interceptor for error handling
+api.interceptors.response.use(
+  (response) => {
+    console.log('API Response:', response.status, response.config.url);
+    return response;
+  },
+  (error) => {
+    console.error('API Error:', error.message);
+    if (error.response) {
+      // Server responded with error status
+      console.error('Error Response:', error.response.status, error.response.data);
+    } else if (error.request) {
+      // Request was made but no response received
+      console.error('No response received:', error.request);
+    } else {
+      // Something else happened
+      console.error('Error setting up request:', error.message);
+    }
+    return Promise.reject(error);
+  }
+);
+
+
+
+
 
 // Response interceptor to handle auth errors
 api.interceptors.response.use(
