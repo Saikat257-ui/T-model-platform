@@ -5,7 +5,10 @@ const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api
 // Log the API URL being used for debugging
 console.log('🔧 API Base URL:', API_BASE_URL);
 console.log('🔧 Environment:', process.env.NODE_ENV);
+console.log('🔧 REACT_APP_API_URL from env:', process.env.REACT_APP_API_URL);
 console.log('🔧 All REACT_APP env vars:', Object.keys(process.env).filter(key => key.startsWith('REACT_APP_')));
+console.log('🔧 Current URL:', window.location.href);
+console.log('🔧 Is localhost?', window.location.hostname === 'localhost');
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -93,8 +96,20 @@ export const authAPI = {
     phone?: string;
     industryId?: string; // Make industryId optional
   }) => {
-    const response = await api.post('/auth/register', userData);
-    return response.data;
+    console.log('🔧 Register attempt with URL:', `${API_BASE_URL}/auth/register`);
+    console.log('🔧 Register data:', { ...userData, password: '[HIDDEN]' });
+    try {
+      const response = await api.post('/auth/register', userData);
+      console.log('🔧 Register success:', response.status);
+      return response.data;
+    } catch (error: any) {
+      console.error('🔧 Register failed:', error.message);
+      if (error.code === 'ERR_NETWORK') {
+        console.error('🔧 Network error - possibly CORS or service down');
+        console.error('🔧 Trying to reach:', `${API_BASE_URL}/auth/register`);
+      }
+      throw error;
+    }
   },
   
   getIndustries: async () => {
