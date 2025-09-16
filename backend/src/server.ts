@@ -28,9 +28,14 @@ const app = express();
 app.use(helmet());
 app.use(cors({
   origin: process.env.NODE_ENV === 'production' 
-    ? [process.env.FRONTEND_URL || 'https://your-production-domain.com'] 
+    ? [
+        process.env.FRONTEND_URL || 'https://your-production-domain.com',
+        /\.onrender\.com$/  // Allow all onrender.com subdomains
+      ] 
     : ['http://localhost:3000'],
-  credentials: true
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 }));
 
 // Rate limiting - more lenient in development
