@@ -2,20 +2,11 @@ import axios from 'axios';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 
-// Log the API URL being used for debugging
-console.log('🔧 API Base URL:', API_BASE_URL);
-console.log('🔧 Environment:', process.env.NODE_ENV);
-console.log('🔧 REACT_APP_API_URL from env:', process.env.REACT_APP_API_URL);
-console.log('🔧 All REACT_APP env vars:', Object.keys(process.env).filter(key => key.startsWith('REACT_APP_')));
-console.log('🔧 Current URL:', window.location.href);
-console.log('🔧 Is localhost?', window.location.hostname === 'localhost');
-
 const api = axios.create({
   baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 10000, // 10 second timeout
 });
 
 // Request interceptor to add auth token
@@ -24,39 +15,8 @@ api.interceptors.request.use((config) => {
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
-  console.log('API Request:', config.method?.toUpperCase(), config.url);
   return config;
 });
-
-
-
-
-
-// Response interceptor for error handling
-api.interceptors.response.use(
-  (response) => {
-    console.log('API Response:', response.status, response.config.url);
-    return response;
-  },
-  (error) => {
-    console.error('API Error:', error.message);
-    if (error.response) {
-      // Server responded with error status
-      console.error('Error Response:', error.response.status, error.response.data);
-    } else if (error.request) {
-      // Request was made but no response received
-      console.error('No response received:', error.request);
-    } else {
-      // Something else happened
-      console.error('Error setting up request:', error.message);
-    }
-    return Promise.reject(error);
-  }
-);
-
-
-
-
 
 // Response interceptor to handle auth errors
 api.interceptors.response.use(
@@ -96,20 +56,8 @@ export const authAPI = {
     phone?: string;
     industryId?: string; // Make industryId optional
   }) => {
-    console.log('🔧 Register attempt with URL:', `${API_BASE_URL}/auth/register`);
-    console.log('🔧 Register data:', { ...userData, password: '[HIDDEN]' });
-    try {
-      const response = await api.post('/auth/register', userData);
-      console.log('🔧 Register success:', response.status);
-      return response.data;
-    } catch (error: any) {
-      console.error('🔧 Register failed:', error.message);
-      if (error.code === 'ERR_NETWORK') {
-        console.error('🔧 Network error - possibly CORS or service down');
-        console.error('🔧 Trying to reach:', `${API_BASE_URL}/auth/register`);
-      }
-      throw error;
-    }
+    const response = await api.post('/auth/register', userData);
+    return response.data;
   },
   
   getIndustries: async () => {
