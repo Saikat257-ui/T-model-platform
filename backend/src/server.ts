@@ -21,6 +21,8 @@ import { errorHandler } from './middleware/errorHandler';
 import { logger } from './utils/logger';
 import { initializeStorage } from './utils/supabase';
 import prisma from './utils/database';
+import { initializeIndustries } from './utils/initializeIndustries';
+import gamificationService from './services/gamificationService';
 
 const app = express();
 
@@ -105,6 +107,18 @@ process.on('SIGINT', async () => {
 app.listen(PORT, async () => {
   logger.info(`T-Model Platform API server running on port ${PORT}`);
   logger.info(`Environment: ${process.env.NODE_ENV}`);
+  
+  // Initialize default industries
+  const industriesInitialized = await initializeIndustries();
+  if (industriesInitialized) {
+    logger.info('Industries initialization completed successfully');
+  } else {
+    logger.warn('Failed to initialize industries');
+  }
+  
+  // Initialize default badges
+  await gamificationService.initializeBadges();
+  logger.info('Badge initialization completed');
   
   // Initialize Supabase storage
   const storageInitialized = await initializeStorage();

@@ -6,11 +6,15 @@ import { fetchUserProgress, fetchUserBadges, fetchAvailableBadges, fetchLeaderbo
 import ProgressRing from '../gamification/ProgressRing';
 import BadgeDisplay from '../gamification/BadgeDisplay';
 import LeaderboardWidget from '../gamification/LeaderboardWidget';
+import { BadgeNotification } from '../gamification/BadgeNotification';
+import { useGamification } from '../../hooks/useGamification';
+import { handleGamificationResponse } from '../../utils/gamification';
 
 const TourDashboard: React.FC = () => {
   const dispatch = useAppDispatch();
   const { userProgress, userBadges, availableBadges, leaderboard, isLoading } = useAppSelector((state: any) => state.gamification);
   const { isAuthenticated, token } = useAppSelector((state: any) => state.auth);
+  const { notification, showGamificationResult, hideNotification } = useGamification();
   
   const [analytics, setAnalytics] = useState<any>(null);
   const [dataLoaded, setDataLoaded] = useState(false);
@@ -81,6 +85,34 @@ const TourDashboard: React.FC = () => {
 
     fetchData();
   }, [dispatch, isAuthenticated, token]);
+
+  // Handle creating a demo tour package
+  const handleCreatePackage = async () => {
+    try {
+      const demoPackage = {
+        name: 'Sample Tour Package',
+        description: 'A demo tour package to showcase the gamification system',
+        destinations: ['Demo City', 'Sample Beach'],
+        duration: 5,
+        price: 999,
+        maxGroupSize: 10,
+        difficulty: 'Easy',
+        category: 'Adventure'
+      };
+      
+      const response = await tourAPI.createPackage(demoPackage);
+      
+      // Handle gamification result
+      handleGamificationResponse(response.data, showGamificationResult);
+      
+      // Refresh gamification data
+      dispatch(fetchUserProgress());
+      dispatch(fetchUserBadges());
+      
+    } catch (error) {
+      console.error('Error creating package:', error);
+    }
+  };
 
   return (
     <Layout>
@@ -231,7 +263,10 @@ const TourDashboard: React.FC = () => {
           <div className="bg-white rounded-xl shadow p-6">
             <div className="font-semibold text-lg mb-4">Quick Actions</div>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <button className="flex items-center justify-center gap-2 bg-[#D1FADF] text-green-700 px-4 py-3 rounded-lg font-medium hover:bg-[#A7F3D0] transition-colors">
+              <button 
+                onClick={handleCreatePackage}
+                className="flex items-center justify-center gap-2 bg-[#D1FADF] text-green-700 px-4 py-3 rounded-lg font-medium hover:bg-[#A7F3D0] transition-colors"
+              >
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 20 20"><rect x="2" y="2" width="16" height="16" rx="4" fill="#22C55E"/><path d="M10 6v8M6 10h8" stroke="#fff" strokeWidth="2" strokeLinecap="round"/></svg>
                 Create Package
               </button>
@@ -251,6 +286,15 @@ const TourDashboard: React.FC = () => {
           </div>
         </div>
       </div>
+      
+      {/* Gamification Notifications */}
+      {notification && (
+        <BadgeNotification 
+          badges={notification.badges}
+          achievements={notification.achievements}
+          onClose={hideNotification}
+        />
+      )}
     </Layout>
   );
 };

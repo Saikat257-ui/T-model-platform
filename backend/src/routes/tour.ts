@@ -1,6 +1,7 @@
 import express from 'express';
 import { authenticateToken, requireIndustry } from '../middleware/auth';
 import prisma from '../utils/database';
+import gamificationService from '../services/gamificationService';
 
 const router = express.Router();
 
@@ -108,10 +109,19 @@ router.post('/packages', authenticateToken, async (req: any, res, next) => {
       }
     });
 
+    // Award badges for creating a tour package
+    const gamificationResult = await gamificationService.updateProgress({
+      userId: req.user.id,
+      industry: 'Tour Management',
+      actionType: 'TOUR_CREATED',
+      metadata: { packageId: newPackage.id, packageName: newPackage.name }
+    });
+
     res.status(201).json({ 
       success: true,
       message: 'Tour package created successfully',
-      package: newPackage 
+      package: newPackage,
+      gamification: gamificationResult
     });
   } catch (error) {
     next(error);

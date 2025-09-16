@@ -1,6 +1,7 @@
 import express from 'express';
 import { authenticateToken, requireIndustry } from '../middleware/auth';
 import prisma from '../utils/database';
+import gamificationService from '../services/gamificationService';
 
 const router = express.Router();
 
@@ -86,10 +87,19 @@ router.post('/bookings/flight', authenticateToken, async (req: any, res, next) =
       }
     });
 
+    // Award badges for creating a booking
+    const gamificationResult = await gamificationService.updateProgress({
+      userId: req.user.id,
+      industry: 'Travel Services',
+      actionType: 'BOOKING_CREATED',
+      metadata: { bookingId: flightBooking.id, type: 'flight' }
+    });
+
     res.status(201).json({
       success: true,
       message: 'Flight booking created successfully',
-      booking: flightBooking
+      booking: flightBooking,
+      gamification: gamificationResult
     });
   } catch (error) {
     next(error);
@@ -109,10 +119,19 @@ router.post('/bookings/hotel', authenticateToken, async (req: any, res, next) =>
       }
     });
 
+    // Award badges for creating a booking
+    const gamificationResult = await gamificationService.updateProgress({
+      userId: req.user.id,
+      industry: 'Travel Services',
+      actionType: 'BOOKING_CREATED',
+      metadata: { bookingId: hotelBooking.id, type: 'hotel' }
+    });
+
     res.status(201).json({
       success: true,
       message: 'Hotel booking created successfully',
-      booking: hotelBooking
+      booking: hotelBooking,
+      gamification: gamificationResult
     });
   } catch (error) {
     next(error);

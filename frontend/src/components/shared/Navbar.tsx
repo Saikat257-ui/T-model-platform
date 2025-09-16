@@ -43,7 +43,7 @@ const Navbar: React.FC = () => {
             {/* Industry Badge */}
             {user?.industry && (
               <div className="flex items-center">
-                <div className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-4 py-2 rounded-full text-sm font-medium shadow-lg flex items-center space-x-2 hover:from-blue-600 hover:to-purple-700 transition-all duration-200 cursor-pointer border border-opacity-20 border-white">
+                <div className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-2 sm:px-4 py-1 sm:py-2 rounded-full text-xs sm:text-sm font-medium shadow-lg flex items-center space-x-2 hover:from-blue-600 hover:to-purple-700 transition-all duration-200 cursor-pointer border border-opacity-20 border-white mx-1 sm:mx-2">
                   {/* Industry Icon */}
                   <div className="w-4 h-4">
                     {user.industry.name === 'Tour Management' && (

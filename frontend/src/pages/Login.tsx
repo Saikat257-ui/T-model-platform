@@ -64,10 +64,10 @@ const Login: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-purple-100 to-blue-100">
-      <div className="flex w-full max-w-4xl mx-auto">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-purple-100 to-blue-100 px-2">
+      <div className="flex w-full max-w-4xl mx-auto px-2">
         <div className="flex-1 flex items-center justify-center">
-          <div className={`bg-white rounded-2xl shadow-xl px-10 py-12 w-full max-w-md flex flex-col items-center form-card-focus ${hasInputActivity ? 'active' : ''}`}>
+          <div className={`bg-white rounded-2xl shadow-xl px-4 sm:px-10 py-12 w-full max-w-md flex flex-col items-center form-card-focus ${hasInputActivity ? 'active' : ''}`}> 
             <div className="mb-6">
               <div className="mx-auto flex items-center justify-center w-16 h-16 rounded-xl bg-gradient-to-br from-purple-500 to-blue-500">
                 {/* Outlined Lock Icon */}

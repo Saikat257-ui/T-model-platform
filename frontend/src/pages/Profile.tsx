@@ -162,8 +162,8 @@ const Profile: React.FC = () => {
 
   // Beautiful Profile page with industry selection
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-indigo-100 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-4xl mx-auto">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-indigo-100 py-6 px-2 sm:px-6 lg:px-8">
+      <div className="max-w-4xl mx-auto px-2">
         {/* Header Section */}
         <div className="text-center mb-12">
           <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl shadow-lg mb-6">
@@ -220,12 +220,12 @@ const Profile: React.FC = () => {
 
         {/* Main Form Card */}
         <div className="bg-white/90 backdrop-blur-sm rounded-3xl shadow-2xl border border-white/50 overflow-hidden">
-          <div className="px-8 py-10 sm:px-12">
+          <div className="px-4 py-8 sm:px-12">
             <form onSubmit={handleSubmit} className="space-y-10">
               
               {/* Personal Information Section */}
               <div>
-                <div className="flex items-center justify-between mb-8">
+                <div className="flex flex-col sm:flex-row items-center justify-between mb-8 gap-4">
                   <div className="flex items-center">
                     <div className="w-12 h-12 bg-gradient-to-br from-blue-100 to-purple-100 rounded-xl flex items-center justify-center mr-4">
                       <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -240,7 +240,7 @@ const Profile: React.FC = () => {
                   
                   {/* User Info Card - Moved to top right */}
                   {user && (
-                    <div className="flex items-center bg-white/80 backdrop-blur-sm rounded-xl px-4 py-2 border border-white/50">
+                    <div className="flex items-center bg-white/80 backdrop-blur-sm rounded-xl px-4 py-2 border border-white/50 self-end sm:self-auto">
                       <div className="w-10 h-10 rounded-full bg-gradient-to-br from-green-400 to-blue-500 flex items-center justify-center text-white font-bold text-sm mr-3">
                         {user.firstName ? user.firstName[0] : user.email?.[0] || 'U'}
                       </div>

@@ -5,6 +5,7 @@ import { z } from 'zod';
 import { createError } from '../middleware/errorHandler';
 import { logger } from '../utils/logger';
 import prisma from '../utils/database';
+import { getIndustriesWithFallback } from '../utils/initializeIndustries';
 
 const router = express.Router();
 
@@ -38,7 +39,7 @@ router.post('/register', async (req, res, next) => {
     }
 
     // Verify industry exists if provided
-    let industry = null;
+    let industry: any = null;
     if (validatedData.industryId) {
       industry = await prisma.industry.findUnique({
         where: { id: validatedData.industryId }
@@ -174,11 +175,7 @@ router.post('/login', async (req, res, next) => {
 // Get available industries
 router.get('/industries', async (req, res, next) => {
   try {
-    const industries = await prisma.industry.findMany({
-      where: { isActive: true },
-      orderBy: { name: 'asc' }
-    });
-
+    const industries = await getIndustriesWithFallback();
     res.json({ industries });
   } catch (error) {
     next(error);

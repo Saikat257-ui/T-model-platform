@@ -3,6 +3,7 @@ import { authenticateToken } from '../middleware/auth';
 import { createError } from '../middleware/errorHandler';
 import { z } from 'zod';
 import prisma from '../utils/database';
+import gamificationService from '../services/gamificationService';
 
 const router = express.Router();
 
@@ -92,6 +93,17 @@ router.put('/profile', authenticateToken, async (req: any, res, next) => {
       });
     }
 
+    // Check if profile is now complete and award badge
+    let gamificationResult: any = null;
+    if (user.firstName && user.lastName && user.phone && user.industryId) {
+      gamificationResult = await gamificationService.updateProgress({
+        userId: req.user.id,
+        industry: user.industry?.name || 'General',
+        actionType: 'PROFILE_COMPLETED',
+        metadata: { profileComplete: true }
+      });
+    }
+
     res.json({
       message: 'Profile updated successfully',
       user: {
@@ -101,7 +113,8 @@ router.put('/profile', authenticateToken, async (req: any, res, next) => {
         lastName: user.lastName,
         phone: user.phone,
         industry: user.industry
-      }
+      },
+      gamification: gamificationResult
     });
   } catch (error) {
     if (error instanceof z.ZodError) {

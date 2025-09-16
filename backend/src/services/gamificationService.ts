@@ -40,7 +40,261 @@ interface BadgeEligibility {
   requiredProgress?: number;
 }
 
+interface BadgeCriteria {
+  actionType: string;
+  requiredCount: number;
+  industry?: string;
+  metadata?: any;
+}
+
 class GamificationService {
+  // Award badges based on user actions and criteria
+  async checkAndAwardBadges(userId: string, actionType: string, industry: string, metadata?: any): Promise<string[]> {
+    try {
+      const awardedBadges: string[] = [];
+      
+      // Get all active badges for this industry and universal badges
+      const availableBadges = await prisma.badge.findMany({
+        where: {
+          isActive: true,
+          OR: [
+            { industry: industry },
+            { industry: null } // Universal badges
+          ]
+        }
+      });
+
+      // Check each badge's criteria
+      for (const badge of availableBadges) {
+        const criteria = badge.criteria as unknown as BadgeCriteria;
+        
+        // Skip if this badge is not for this action type
+        if (criteria.actionType !== actionType) continue;
+
+        // Check if user already has this badge
+        const existingBadge = await prisma.userBadge.findUnique({
+          where: {
+            userId_badgeId: {
+              userId: userId,
+              badgeId: badge.id
+            }
+          }
+        });
+
+        if (existingBadge) continue; // User already has this badge
+
+        // Count user's actions of this type
+        const actionCount = await this.getUserActionCount(userId, actionType, industry);
+        
+        // Check if user meets the criteria
+        if (actionCount >= criteria.requiredCount) {
+          // Award the badge
+          await prisma.userBadge.create({
+            data: {
+              userId: userId,
+              badgeId: badge.id
+            }
+          });
+
+          // Create achievement record
+          await prisma.achievement.create({
+            data: {
+              userId: userId,
+              type: 'MILESTONE_REACHED',
+              category: industry.toLowerCase(),
+              description: `Earned badge: ${badge.name}`,
+              points: badge.points,
+              metadata: { badgeId: badge.id, actionType, count: actionCount }
+            }
+          });
+
+          awardedBadges.push(badge.id);
+        }
+      }
+
+      return awardedBadges;
+    } catch (error) {
+      console.error('Error checking and awarding badges:', error);
+      return [];
+    }
+  }
+
+  // Count user's specific actions
+  private async getUserActionCount(userId: string, actionType: string, industry: string): Promise<number> {
+    try {
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        include: {
+          tourPackages: true,
+          travelBookings: true,
+          shipments: true,
+        }
+      });
+
+      if (!user) return 0;
+
+      switch (actionType) {
+        case 'TOUR_CREATED':
+          return user.tourPackages.length;
+        case 'BOOKING_CREATED':
+          return user.travelBookings.length;
+        case 'SHIPMENT_CREATED':
+          return user.shipments.length;
+        case 'PROFILE_COMPLETED':
+          return (user.firstName && user.lastName && user.phone) ? 1 : 0;
+        default:
+          return 0;
+      }
+    } catch (error) {
+      console.error('Error getting user action count:', error);
+      return 0;
+    }
+  }
+
+  // Initialize default badges for each industry
+  async initializeBadges(): Promise<void> {
+    try {
+      const existingBadges = await prisma.badge.count();
+      if (existingBadges > 0) return; // Badges already exist
+
+      const defaultBadges = [
+        // Tour Management Badges
+        {
+          name: 'Tour Explorer',
+          description: 'Created your first tour package',
+          category: 'MILESTONE' as const,
+          industry: 'Tour Management',
+          criteria: { actionType: 'TOUR_CREATED', requiredCount: 1 },
+          points: 100,
+          iconUrl: '/icons/tour-explorer.svg'
+        },
+        {
+          name: 'Tour Master',
+          description: 'Created 5 tour packages',
+          category: 'ACHIEVEMENT' as const,
+          industry: 'Tour Management',
+          criteria: { actionType: 'TOUR_CREATED', requiredCount: 5 },
+          points: 500,
+          iconUrl: '/icons/tour-master.svg'
+        },
+        {
+          name: 'Tour Legend',
+          description: 'Created 25 tour packages',
+          category: 'ACHIEVEMENT' as const,
+          industry: 'Tour Management',
+          criteria: { actionType: 'TOUR_CREATED', requiredCount: 25 },
+          points: 2500,
+          iconUrl: '/icons/tour-legend.svg'
+        },
+        
+        // Travel Services Badges
+        {
+          name: 'Travel Agent',
+          description: 'Made your first booking',
+          category: 'MILESTONE' as const,
+          industry: 'Travel Services',
+          criteria: { actionType: 'BOOKING_CREATED', requiredCount: 1 },
+          points: 100,
+          iconUrl: '/icons/travel-agent.svg'
+        },
+        {
+          name: 'Booking Pro',
+          description: 'Made 10 bookings',
+          category: 'ACHIEVEMENT' as const,
+          industry: 'Travel Services',
+          criteria: { actionType: 'BOOKING_CREATED', requiredCount: 10 },
+          points: 1000,
+          iconUrl: '/icons/booking-pro.svg'
+        },
+        
+        // Logistics Badges
+        {
+          name: 'Logistics Starter',
+          description: 'Created your first shipment',
+          category: 'MILESTONE' as const,
+          industry: 'Logistics & Shipping',
+          criteria: { actionType: 'SHIPMENT_CREATED', requiredCount: 1 },
+          points: 100,
+          iconUrl: '/icons/logistics-starter.svg'
+        },
+        {
+          name: 'Shipping Expert',
+          description: 'Created 20 shipments',
+          category: 'ACHIEVEMENT' as const,
+          industry: 'Logistics & Shipping',
+          criteria: { actionType: 'SHIPMENT_CREATED', requiredCount: 20 },
+          points: 2000,
+          iconUrl: '/icons/shipping-expert.svg'
+        },
+        
+        // Universal Badges
+        {
+          name: 'Profile Complete',
+          description: 'Completed your profile information',
+          category: 'COMPLETION' as const,
+          industry: null,
+          criteria: { actionType: 'PROFILE_COMPLETED', requiredCount: 1 },
+          points: 50,
+          iconUrl: '/icons/profile-complete.svg'
+        }
+      ];
+
+      await prisma.badge.createMany({
+        data: defaultBadges,
+        skipDuplicates: true
+      });
+
+      console.log(`✅ Created ${defaultBadges.length} default badges`);
+    } catch (error) {
+      console.error('Error initializing badges:', error);
+    }
+  }
+
+  // Update user progress and check for new badges
+  async updateProgress(update: ProgressUpdate): Promise<{achievements: any[], badges: string[]}> {
+    try {
+      // Update user's progress in the database
+      await prisma.userProgress.upsert({
+        where: {
+          userId: update.userId
+        },
+        update: {
+          totalPoints: { increment: 10 }, // Base points for any action
+          updatedAt: new Date()
+        },
+        create: {
+          userId: update.userId,
+          totalPoints: 10,
+          currentLevel: 1
+        }
+      });
+
+      // Check and award badges
+      const newBadges = await this.checkAndAwardBadges(
+        update.userId, 
+        update.actionType, 
+        update.industry, 
+        update.metadata
+      );
+
+      // Get recent achievements
+      const achievements = await prisma.achievement.findMany({
+        where: {
+          userId: update.userId,
+          achievedAt: {
+            gte: new Date(Date.now() - 24 * 60 * 60 * 1000) // Last 24 hours
+          }
+        },
+        orderBy: { achievedAt: 'desc' },
+        take: 5
+      });
+
+      return { achievements, badges: newBadges };
+    } catch (error) {
+      console.error('Error updating progress:', error);
+      return { achievements: [], badges: [] };
+    }
+  }
   // Calculate user's overall progress based on industry
   async calculateProgress(userId: string, industry: string): Promise<number> {
     try {

@@ -1,6 +1,7 @@
 import express from 'express';
 import { authenticateToken, requireIndustry } from '../middleware/auth';
 import prisma from '../utils/database';
+import gamificationService from '../services/gamificationService';
 
 const router = express.Router();
 
@@ -114,10 +115,19 @@ router.post('/shipments', authenticateToken, async (req: any, res, next) => {
       }
     });
 
+    // Award badges for creating a shipment
+    const gamificationResult = await gamificationService.updateProgress({
+      userId: req.user.id,
+      industry: 'Logistics & Shipping',
+      actionType: 'SHIPMENT_CREATED',
+      metadata: { shipmentId: newShipment.id, origin: shipmentData.origin, destination: shipmentData.destination }
+    });
+
     res.status(201).json({
       success: true,
       message: 'Shipment created successfully',
-      shipment: newShipment
+      shipment: newShipment,
+      gamification: gamificationResult
     });
   } catch (error) {
     next(error);
